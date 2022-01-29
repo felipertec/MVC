@@ -5,17 +5,17 @@ namespace App\Controller\Pages;
 use App\Utils\View;
 use App\Model\Entity\Organization;
 
-class Home extends Page{
+class About extends Page{
 
-    public static function getHome(){
+    public static function getAbout(){
 
         $obOrganization = new Organization;
 
-        $content = View::render('pages/home', [
+        $content = View::render('pages/about', [
             'name' => $obOrganization->name,
             'description' => $obOrganization->description
         ]);
-        return parent::getPage('Home > FRtec', $content);
+        return parent::getPage('Sobre > FRtec', $content);
     }
 
 }

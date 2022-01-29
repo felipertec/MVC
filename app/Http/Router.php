@@ -4,6 +4,8 @@ namespace App\Http;
 
 use \Closure;
 use \Exception;
+use Reflection;
+use \ReflectionFunction;
 
 class Router{
 
@@ -37,6 +39,16 @@ class Router{
                 unset($params[$key]);
                 continue;
             }
+        }
+
+        //Variaveis da Rota
+        $params['variables'] = [];
+
+        //Padrão de validação das variaveis das rotas
+        $patternVariable = '/{(.*?)}/';
+        if(preg_match_all($patternVariable,$route,$matches)){
+            $route = preg_replace($patternVariable,'(.*?)',$route);
+            $params['variables'] = $matches[1];
         }
 
         //Padrão de validação da URL
@@ -110,9 +122,17 @@ class Router{
         //Valida as URLS
         foreach ($this->routes as $pattenRoute => $methods) {
             //Verifica se a Uri Bate coma  padrão
-            if(preg_match($pattenRoute, $uri)){
+            if(preg_match($pattenRoute, $uri,$matches)){
                 //Verifica methodo
-                if($methods[$httpMethod]){
+                if(isset($methods[$httpMethod])){
+                    //Remove a primeira posição
+                    unset($matches[0]);
+
+                    //Variaveis processadas
+                    $keys = $methods[$httpMethod]['variables'];
+                    $methods[$httpMethod]['variables'] = array_combine($keys, $matches);
+                    $methods[$httpMethod]['variables']['request'] = $this->request;
+
                     //Retorno dos paramentros da rota
                     return $methods[$httpMethod];
                 }
@@ -138,6 +158,13 @@ class Router{
             }
 
             $args = [];
+
+            //Reflection
+            $reflection = new ReflectionFunction($route['controller']);
+            foreach ($reflection->getParameters() as $parameter) {
+                $name = $parameter->getName();
+                $args[$name] = $route['variables'][$name] ?? '';
+            }
 
             //retorna a execução da função
             return call_user_func_array($route['controller'], $args);
